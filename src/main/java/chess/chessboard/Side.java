@@ -29,6 +29,6 @@ public enum Side {
     public abstract Side nextTurn();
 
     public boolean isTurnOf(final Piece piece) {
-        return piece;
+        return piece.isSideOf(this);
     }
 }

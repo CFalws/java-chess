@@ -4,22 +4,15 @@ import chess.chessboard.ChessBoard;
 import chess.chessboard.Position;
 import chess.chessboard.Side;
 
-public class KingDeadStatus implements GameStatus {
-
-    private final Side winner;
-
-    public KingDeadStatus(final Side winner) {
-        this.winner = winner;
-    }
-
+public class ReadyStatus implements GameStatus {
     @Override
     public void validateMove(final ChessBoard chessBoard, final Position from, final Position to) {
-        throw new UnsupportedOperationException("게임이 진행 상태가 아닙니다");
+        throw new IllegalArgumentException("게임이 진행 중이지 않습니다");
     }
 
     @Override
     public GameStatus nextStatus(final ChessBoard chessBoard) {
-        return this;
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -29,11 +22,11 @@ public class KingDeadStatus implements GameStatus {
 
     @Override
     public Side getWinner() {
-        return winner;
+        throw new IllegalArgumentException("");
     }
 
     @Override
     public Side getTurn() {
-        return winner;
+        throw new UnsupportedOperationException();
     }
 }

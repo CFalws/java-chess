@@ -43,4 +43,9 @@ public class KingAliveStatus implements GameStatus {
     public Side getWinner() {
         throw new UnsupportedOperationException("게임이 아직 진행 중입니다");
     }
+
+    @Override
+    public Side getTurn() {
+        return turn;
+    }
 }

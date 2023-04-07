@@ -102,7 +102,7 @@ public class ChessGameDaoImpl implements ChessGameDao {
             if (turn == null) {
                 return Optional.empty();
             }
-            return Optional.of(new ChessGame(turn, new ChessBoard(map)));
+            return Optional.of(new ChessGame(new ChessBoard(map)));
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

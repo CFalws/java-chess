@@ -4,76 +4,42 @@ import chess.chessboard.ChessBoard;
 import chess.chessboard.Position;
 import chess.chessboard.Side;
 import chess.piece.Piece;
-import chess.piece.PieceType;
 import chess.status.GameStatus;
+import chess.status.KingAliveStatus;
+import chess.status.ReadyStatus;
 
 import java.util.Map;
 
 public class ChessGame {
 
+    private static final ChessGame unplayableGame = new ChessGame(null, new ReadyStatus());
+
     private final ChessBoard chessBoard;
-    private Side turn;
-    private Side winner;
     private GameStatus gameStatus;
 
-    public ChessGame(final Side turn, final ChessBoard chessBoard) {
-        this.chessBoard = chessBoard;
-        this.turn = turn;
-        this.winner = Side.EMPTY;
-    }
-
     public ChessGame(final ChessBoard chessBoard) {
-        this(Side.initialTurn(), chessBoard);
+        this(chessBoard, new KingAliveStatus(Side.initialTurn()));
     }
 
-    public void move(final Position from, final Position to) {
-        validatePlayerTurn(from);
-        validateGameContinuing();
+    public ChessGame(final ChessBoard chessBoard, final GameStatus gameStatus) {
+        this.chessBoard = chessBoard;
+        this.gameStatus = gameStatus;
+    }
+
+    public static ChessGame getUnplayableGame() {
+        return unplayableGame;
+    }
+
+    public void moveWithCapture(final Position from, final Position to) {
+        gameStatus.validateMove(chessBoard, from, to);
 
         final Piece capturedPiece = chessBoard.moveWithCapture(from, to);
 
-        checkWinnerDecided(capturedPiece);
-
-        turn = turn.nextTurn();
-    }
-
-    private void validateGameContinuing() {
-        if (isKingDead()) {
-            throw new IllegalStateException("왕이 죽어서 이동할 수 없습니다");
-        }
-    }
-
-    private void checkWinnerDecided(final Piece capturedPiece) {
-        if (capturedPiece.getPieceType() == PieceType.KING) {
-            checkWinner(capturedPiece);
-        }
-    }
-
-    private void checkWinner(final Piece capturedPiece) {
-        if (capturedPiece.getSide() == Side.WHITE) {
-            winner = Side.BLACK;
-            return;
-        }
-        winner = Side.WHITE;
-    }
-
-    private void validatePlayerTurn(final Position from) {
-        final Side side = chessBoard.getPieceSideAt(from);
-        if (!turn.isTurnOf(side)) {
-            throw new IllegalArgumentException("공격 순서가 잘못되었습니다");
-        }
-    }
-
-    public boolean isKingDead() {
-        return winner != Side.EMPTY;
+        gameStatus = gameStatus.nextStatus(chessBoard);
     }
 
     public boolean isGameOver() {
         return gameStatus.isGameOver();
-    }
-
-    public ChessBoard getChessBoard() {
-        return chessBoard;
     }
 
     public PlayerScore calculateScore(Side player) {
@@ -82,11 +48,15 @@ public class ChessGame {
         return PlayerScore.from(piecesOfPlayer);
     }
 
-    public String getWinner() {
-        return winner.name();
+    public ChessBoard getChessBoard() {
+        return chessBoard;
+    }
+
+    public Side getWinner() {
+        return gameStatus.getWinner();
     }
 
     public Side getTurn() {
-        return turn;
+        return gameStatus.getTurn();
     }
 }

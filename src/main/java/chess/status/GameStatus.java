@@ -13,4 +13,6 @@ public interface GameStatus {
     boolean isGameOver();
 
     Side getWinner();
+
+    Side getTurn();
 }

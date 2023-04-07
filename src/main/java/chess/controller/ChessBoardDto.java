@@ -20,7 +20,7 @@ public class ChessBoardDto {
         this.pieceDtos = pieceDtos;
     }
 
-    public static ChessBoardDto of(ChessBoard chessBoard) {
+    public static ChessBoardDto from(ChessBoard chessBoard) {
         final Map<Position, Piece> chessBoardPieces = chessBoard.getPieces();
         final List<List<PieceDto>> pieceDtos = initChessBoard();
 
