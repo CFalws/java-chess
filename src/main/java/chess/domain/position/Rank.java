@@ -67,4 +67,7 @@ public enum Rank {
         return position;
     }
 
+    public String getSymbol() {
+        return symbol;
+    }
 }

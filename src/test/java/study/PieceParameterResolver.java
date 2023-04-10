@@ -4,7 +4,6 @@ import chess.domain.piece.Color;
 import chess.domain.piece.Pawn;
 import chess.domain.piece.Piece;
 import chess.domain.position.Position;
-import chess.domain.strategy.piecemovestrategy.PawnMoveStrategy;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
@@ -30,6 +29,6 @@ public class PieceParameterResolver implements ParameterResolver {
                                                .toString()
                                                .split(",");
         System.out.println(split[0]);
-        return new Pawn(Color.WHITE, Position.of("b2"), PawnMoveStrategy.from(Color.WHITE));
+        return new Pawn(Color.WHITE, Position.of("b2"));
     }
 }

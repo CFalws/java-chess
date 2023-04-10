@@ -16,21 +16,26 @@ public final class NonPawnPiece extends AbstractPiece {
     }
 
     @Override
-    public void move(final Position from, final Position to, final Piece target) {
-        validateMovable(from, to, target);
+    public void move(final Piece target) {
+        validateMovable(target);
 
-        position = to;
+        position = target.getPosition();
     }
 
-    private void validateMovable(final Position from, final Position to, final Piece target) {
-        validateNotSamePosition(from, to);
+    private void validateMovable(final Piece target) {
+        validateNotSamePosition(target);
         validateNotSameColor(target);
-        validateTargetPositionIdentity(to, target);
-        validateMovablePosition(from, to);
+        validateMovablePosition(target);
     }
 
-    private void validateMovablePosition(final Position from, final Position to) {
-        if (!pieceMoveStrategy.isMovable(from, to)) {
+    private void validateNotSamePosition(final Piece target) {
+        if (position.equals(target.getPosition())) {
+            throw new IllegalArgumentException("가려고 하는 위치가 현재 위치와 같습니다");
+        }
+    }
+
+    private void validateMovablePosition(Piece target) {
+        if (!pieceMoveStrategy.isMovable(position, target.getPosition())) {
             throw new IllegalArgumentException("해당 기물이 이동할 수 없는 위치입니다");
         }
     }

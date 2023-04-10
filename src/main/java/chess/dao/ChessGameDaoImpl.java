@@ -2,19 +2,13 @@ package chess.dao;
 
 import chess.domain.chessboard.ChessBoard;
 import chess.domain.chessgame.ChessGame;
-import chess.domain.piece.*;
-import chess.domain.position.File;
+import chess.domain.piece.Piece;
 import chess.domain.position.Position;
-import chess.domain.position.Rank;
-import chess.domain.status.GameStatus;
-import chess.domain.status.KingAliveStatus;
-import chess.domain.status.KingDeadStatus;
-import chess.domain.strategy.piecemovestrategy.*;
+import chess.dto.ChessGameDto;
+import chess.dto.PieceDto;
+import chess.dto.dtomapper.ChessGameMapper;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -30,25 +24,17 @@ public class ChessGameDaoImpl implements ChessGameDao {
 
     private void saveGame(final ChessGame chessGame) {
         final var chessGameStatement = "INSERT INTO chess_game(id, turn, play_state) VALUES(?, ?, ?)";
-        final Color turn = chessGame.getTurn();
-        if (chessGame.isGameOver()) {
-            jdbcTemplate.update(chessGameStatement, chessGame.getId(), turn.name(), "KingDead");
-        } else {
-            jdbcTemplate.update(chessGameStatement, chessGame.getId(), turn.name(), "KingAlive");
-        }
+        final ChessGameDto dto = ChessGameMapper.toDto(chessGame);
+        jdbcTemplate.update(chessGameStatement, dto.getId(), dto.getTurn(), dto.getGameStatus());
     }
 
     private void savePieces(final ChessGame chessGame) {
-        final var pieceStatement = "INSERT INTO pieces(chess_game_id, color, type, `file`, `rank`) VALUES(?, ?, ?, ?, ?)";
+        final var piecesStatement = "INSERT INTO pieces(chess_game_id, color, type, `file`, `rank`) VALUES(?, ?, ?, ?, ?)";
         final Map<Position, Piece> pieces = chessGame.getChessBoard()
                                                      .getPieces();
         for (final Piece piece : pieces.values()) {
-            final Color color = piece.getColor();
-            final PieceType pieceType = piece.getPieceType();
-            final Position position = piece.getPosition();
-            final File file = position.getFile();
-            final Rank rank = position.getRank();
-            jdbcTemplate.update(pieceStatement, chessGame.getId(), color.name(), pieceType.name(), file.name(), rank.name());
+            final PieceDto pieceDto = RowMapper.toPieceDto(piece);
+            jdbcTemplate.update(piecesStatement, chessGame.getId(), pieceDto.getColor(), pieceDto.getType(), pieceDto.getFile(), pieceDto.getRank());
         }
     }
 
@@ -68,63 +54,26 @@ public class ChessGameDaoImpl implements ChessGameDao {
     }
 
     @Override
-    public Optional<ChessGame> findById(final int id) {
-        final var pieceQuery = "SELECT color, type, `file`, `rank` from pieces WHERE chess_game_id = ?";
-        final var chessGameQuery = "SELECT id, turn, play_state from chess_game where id = ?";
-        final ConnectionPool connectionPool = new ConnectionPool();
-        try (final var connection = connectionPool.getDatabaseConnection();
-             final PreparedStatement psForChessGame = connection.prepareStatement(chessGameQuery);
-             final var psForPiece = connection.prepareStatement(pieceQuery)
-        ) {
-            psForChessGame.setInt(1, id);
-            psForPiece.setInt(1, id);
+    public Optional<ChessGame> findById(final int gameId) {
+        final var piecesQuery = "SELECT color, type, `file`, `rank` from pieces WHERE chess_game_id = ?";
+        final var chessGameQuery = "SELECT id, turn, play_state from chess_game WHERE id = ?";
+        final ChessBoard chessBoard = RowMapper.toChessBoard(jdbcTemplate.query(piecesQuery, gameId));
+        final ChessGame chessGame = findChessGame(chessGameQuery, gameId, chessBoard);
+        return Optional.ofNullable(chessGame);
+    }
 
-            final ResultSet resultSetForChessGame = psForChessGame.executeQuery();
-            int gameId = 0;
-            Color turn = null;
-            GameStatus gameState = null;
+    private ChessGame findChessGame(final String chessGameQuery, final int gameId, final ChessBoard chessBoard) {
+        final List<List<String>> gameData = jdbcTemplate.query(chessGameQuery, gameId);
+        if (gameData.isEmpty()) {
+            return null;
+        }
+        validateGameDataSizeIsOne(gameData);
+        return RowMapper.toChessGame(gameData.get(0), chessBoard);
+    }
 
-            if (resultSetForChessGame.next()) {
-                gameId = resultSetForChessGame.getInt("id");
-                turn = Color.valueOf(resultSetForChessGame.getString("turn"));
-                final String playState = resultSetForChessGame.getString("play_state");
-                if (playState.equals("ENDING")) {
-                    gameState = new KingDeadStatus(turn);
-                } else {
-                    gameState = new KingAliveStatus(turn);
-                }
-            }
-
-            Map<Position, Piece> map = new HashMap<>();
-            final ResultSet resultSetForPieces = psForPiece.executeQuery();
-            while (resultSetForPieces.next()) {
-                final Color color = Color.valueOf(resultSetForPieces.getString("color"));
-                final PieceType type = PieceType.valueOf(resultSetForPieces.getString("type"));
-                final File file = File.valueOf(resultSetForPieces.getString("file"));
-                final Rank rank = Rank.valueOf(resultSetForPieces.getString("rank"));
-                final Position position = Position.of(rank, file);
-                if (type == PieceType.PAWN) {
-                    map.put(position, new Pawn(color, position, PawnMoveStrategy.from(color)));
-                } else if (type == PieceType.KING) {
-                    map.put(position, new NonPawnPiece(color, position, KingMove.getInstance()));
-                } else if (type == PieceType.QUEEN) {
-                    map.put(position, new NonPawnPiece(color, position, QueenMove.getInstance()));
-                } else if (type == PieceType.ROOK) {
-                    map.put(position, new NonPawnPiece(color, position, RookMove.getInstance()));
-                } else if (type == PieceType.BISHOP) {
-                    map.put(position, new NonPawnPiece(color, position, BishopMove.getInstance()));
-                } else if (type == PieceType.KNIGHT) {
-                    map.put(position, new NonPawnPiece(color, position, KnightMove.getInstance()));
-                } else {
-                    map.put(position, new Empty(position));
-                }
-            }
-            if (turn == null) {
-                return Optional.empty();
-            }
-            return Optional.of(ChessGame.createChessGame(gameId, ChessBoard.of(map), gameState));
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+    private void validateGameDataSizeIsOne(final List<List<String>> gameData) {
+        if (gameData.size() != 1) {
+            throw new IllegalArgumentException("이상하다");
         }
     }
 }

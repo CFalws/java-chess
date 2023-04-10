@@ -5,7 +5,7 @@ import chess.domain.strategy.piecemovestrategy.PieceType;
 
 public interface Piece {
 
-    void move(Position from, Position to, Piece target);
+    void move(Piece target);
 
     boolean isEmpty();
 

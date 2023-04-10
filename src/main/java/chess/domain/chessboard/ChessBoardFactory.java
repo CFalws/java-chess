@@ -32,7 +32,7 @@ public class ChessBoardFactory {
     private void createPawns(final Map<Position, Piece> pieces, final Rank rank, final Color color) {
         for (final File file : File.values()) {
             final Position position = Position.of(rank, file);
-            pieces.put(position, new Pawn(color, position, PawnMoveStrategy.from(color)));
+            pieces.put(position, new Pawn(color, position));
         }
     }
 

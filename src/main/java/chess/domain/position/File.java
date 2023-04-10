@@ -61,4 +61,8 @@ public enum File {
     public int getPosition() {
         return position;
     }
+
+    public String getSymbol() {
+        return symbol;
+    }
 }

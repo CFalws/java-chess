@@ -6,7 +6,6 @@ import chess.domain.piece.Pawn;
 import chess.domain.piece.Piece;
 import chess.domain.position.Position;
 import chess.domain.strategy.piecemovestrategy.KingMove;
-import chess.domain.strategy.piecemovestrategy.PawnMoveStrategy;
 
 public class PieceFactory {
 
@@ -16,7 +15,7 @@ public class PieceFactory {
         final Position position = Position.of(split[2]);
         switch (split[1]) {
             case "pawn": {
-                return new Pawn(color, position, PawnMoveStrategy.from(color));
+                return new Pawn(color, position);
             }
             case "king": {
                 return new NonPawnPiece(color, position, KingMove.getInstance());

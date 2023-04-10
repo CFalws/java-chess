@@ -12,7 +12,6 @@ import java.util.Collection;
 public final class ChessBoardMapper {
 
     private static final int CHESS_BOARD_SIZE = 8;
-    private static final PieceMapper PIECE_MAPPER = new PieceMapper();
 
     public PieceDto[][] toDto(ChessBoard chessBoard) {
         PieceDto[][] dto = getEmptyBoard();
@@ -33,7 +32,7 @@ public final class ChessBoardMapper {
         for (final Piece piece : pieces) {
             final int rowIndex = getRowIndex(piece.getPosition());
             final int columnIndex = getColumnIndex(piece.getPosition());
-            dto[rowIndex][columnIndex] = PIECE_MAPPER.toDto(piece);
+            dto[rowIndex][columnIndex] = PieceMapper.toDto(piece);
         }
         return dto;
     }

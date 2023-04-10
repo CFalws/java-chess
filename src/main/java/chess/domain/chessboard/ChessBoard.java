@@ -29,7 +29,17 @@ public class ChessBoard {
             pieces.put(piece.getPosition(), piece);
         }
 
-        return ChessBoard.of(pieces);
+        return of(pieces);
+    }
+
+    public static ChessBoard of(final List<Piece> pieceList) {
+        final Map<Position, Piece> pieces = new HashMap<>();
+
+        for (final Piece piece : pieceList) {
+            pieces.put(piece.getPosition(), piece);
+        }
+
+        return of(pieces);
     }
 
     public Piece moveWithCapture(final Position from, final Position to) {
@@ -70,7 +80,7 @@ public class ChessBoard {
         final Piece pieceToMove = pieces.get(from);
         final Piece target = pieces.get(to);
 
-        pieceToMove.move(from, to, target);
+        pieceToMove.move(target);
         pieces.put(to, pieceToMove);
         pieces.put(from, new Empty(from));
     }

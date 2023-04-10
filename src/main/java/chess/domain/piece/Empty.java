@@ -13,7 +13,7 @@ public final class Empty extends AbstractPiece {
     }
 
     @Override
-    public void move(final Position from, final Position to, final Piece target) {
+    public void move(final Piece target) {
         throw new UnsupportedOperationException();
     }
 

@@ -6,8 +6,8 @@ import chess.dto.WinnerDto;
 
 public class OutputView {
 
-    public static final String BLACK_COLOR = "black";
-    public static final String WHITE_COLOR = "white";
+    public static final String BLACK_COLOR = "BLACK";
+    public static final String WHITE_COLOR = "WHITE";
 
     private static final String PROMPT = "> ";
 
@@ -48,7 +48,7 @@ public class OutputView {
 
     private String generatePieceOutput(final PieceDto pieceDto) {
         final String color = pieceDto.getColor();
-        final String type = pieceDto.getType();
+        final String type = toOutputFormat(pieceDto.getType());
 
         if (color.equals(BLACK_COLOR)) {
             return type.toUpperCase();
@@ -57,6 +57,33 @@ public class OutputView {
             return type.toLowerCase();
         }
         return type;
+    }
+
+    private String toOutputFormat(final String type) {
+        switch (type) {
+            case "PAWN": {
+                return "p";
+            }
+            case "BISHOP": {
+                return "b";
+            }
+            case "ROOK": {
+                return "r";
+            }
+            case "KNIGHT": {
+                return "n";
+            }
+            case "QUEEN": {
+                return "q";
+            }
+            case "KING": {
+                return "k";
+            }
+            case "EMPTY": {
+                return ".";
+            }
+        }
+        throw new IllegalArgumentException("존재하지 않는 기물입니다");
     }
 
     public void printScore(final ScoreDto scoreDto) {
