@@ -19,66 +19,46 @@ import java.util.Map;
 import java.util.Optional;
 
 public class ChessGameDaoImpl implements ChessGameDao {
-    private final ConnectionPool connectionPool = new ConnectionPool();
+
+    private final JdbcTemplate jdbcTemplate = new JdbcTemplate();
 
     @Override
     public void save(final ChessGame chessGame) {
-        final var pieceQuery = "INSERT INTO pieces(chess_game_id, color, type, `file`, `rank`) VALUES(?, ?, ?, ?, ?)";
-        final var chessGameQuery = "INSERT INTO chess_game(id, turn, play_state) VALUES(?, ?, ?)";
-        try (final var connection = connectionPool.getDatabaseConnection();
-             final PreparedStatement psForChessGame = connection.prepareStatement(chessGameQuery);
-             final var psForPiece = connection.prepareStatement(pieceQuery)
-        ) {
-            final Color turn = chessGame.getTurn();
-            final ChessBoard chessBoard = chessGame.getChessBoard();
-            final Map<Position, Piece> pieces = chessBoard.getPieces();
+        saveGame(chessGame);
+        savePieces(chessGame);
+    }
 
-            psForChessGame.setInt(1, chessGame.getId());
-            psForChessGame.setString(2, turn.name());
-            if (chessGame.isGameOver()) {
-                psForChessGame.setString(3, "END");
-            } else {
-                psForChessGame.setString(3, "PLAYING");
-            }
-            psForChessGame.executeUpdate();
+    private void saveGame(final ChessGame chessGame) {
+        final var chessGameStatement = "INSERT INTO chess_game(id, turn, play_state) VALUES(?, ?, ?)";
+        final Color turn = chessGame.getTurn();
+        if (chessGame.isGameOver()) {
+            jdbcTemplate.update(chessGameStatement, chessGame.getId(), turn.name(), "KingDead");
+        } else {
+            jdbcTemplate.update(chessGameStatement, chessGame.getId(), turn.name(), "KingAlive");
+        }
+    }
 
-            for (final Map.Entry<Position, Piece> positionPieceEntry : pieces.entrySet()) {
-                final Piece piece = positionPieceEntry.getValue();
-                final Position position = positionPieceEntry.getKey();
-
-                psForPiece.setInt(1, chessGame.getId());
-                psForPiece.setString(2, piece.getColor()
-                                             .name());
-                psForPiece.setString(3, piece.getPieceType()
-                                             .name());
-                psForPiece.setString(4, position.getFile()
-                                                .name());
-                psForPiece.setString(5, position.getRank()
-                                                .name());
-
-                psForPiece.executeUpdate();
-            }
-        } catch (final SQLException e) {
-            throw new RuntimeException(e);
+    private void savePieces(final ChessGame chessGame) {
+        final var pieceStatement = "INSERT INTO pieces(chess_game_id, color, type, `file`, `rank`) VALUES(?, ?, ?, ?, ?)";
+        final Map<Position, Piece> pieces = chessGame.getChessBoard()
+                                                     .getPieces();
+        for (final Piece piece : pieces.values()) {
+            final Color color = piece.getColor();
+            final PieceType pieceType = piece.getPieceType();
+            final Position position = piece.getPosition();
+            final File file = position.getFile();
+            final Rank rank = position.getRank();
+            jdbcTemplate.update(pieceStatement, chessGame.getId(), color.name(), pieceType.name(), file.name(), rank.name());
         }
     }
 
     @Override
     public void deleteGameById(int id) {
-        String piecesQuery = "DELETE FROM pieces where chess_game_id = ?";
-        String chessGameQuery = "DELETE FROM chess_game where id = ?";
+        final String piecesDeleteStmt = "DELETE FROM pieces where chess_game_id = ?";
+        final String chessGameDeleteStmt = "DELETE FROM chess_game where id = ?";
 
-        try (final var connection = connectionPool.getDatabaseConnection();
-             final PreparedStatement psForPieces = connection.prepareStatement(piecesQuery);
-             final PreparedStatement psForChessGame = connection.prepareStatement(chessGameQuery)
-        ) {
-            psForChessGame.setInt(1, id);
-            psForPieces.setInt(1, id);
-            psForPieces.executeUpdate();
-            psForChessGame.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        jdbcTemplate.update(piecesDeleteStmt, id);
+        jdbcTemplate.update(chessGameDeleteStmt, id);
     }
 
     @Override
@@ -91,6 +71,7 @@ public class ChessGameDaoImpl implements ChessGameDao {
     public Optional<ChessGame> findById(final int id) {
         final var pieceQuery = "SELECT color, type, `file`, `rank` from pieces WHERE chess_game_id = ?";
         final var chessGameQuery = "SELECT id, turn, play_state from chess_game where id = ?";
+        final ConnectionPool connectionPool = new ConnectionPool();
         try (final var connection = connectionPool.getDatabaseConnection();
              final PreparedStatement psForChessGame = connection.prepareStatement(chessGameQuery);
              final var psForPiece = connection.prepareStatement(pieceQuery)
