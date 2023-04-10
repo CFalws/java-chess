@@ -29,7 +29,7 @@ public class ChessBoard {
             pieces.put(piece.getPosition(), piece);
         }
 
-        return ChessBoard.of(pieces);
+        return of(pieces);
     }
 
     public Piece moveWithCapture(final Position from, final Position to) {
