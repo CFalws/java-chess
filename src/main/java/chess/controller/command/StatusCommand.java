@@ -24,11 +24,7 @@ public class StatusCommand extends AbstractCommand {
     public ChessGame execute(final InputView inputView, final OutputView outputView, final ChessGameService chessGameService, final ChessGame chessGame) {
         validatePlaying(chessGame);
 
-        if (chessGameService.isGameOver(chessGame)) {
-            outputView.printWinner(chessGameService.getWinner(chessGame));
-        } else {
-            outputView.printScore(chessGameService.calculateScores(chessGame));
-        }
+        outputView.printScore(chessGameService.calculateScores(chessGame));
         return chessGame;
     }
 }
