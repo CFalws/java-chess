@@ -87,7 +87,7 @@ public class ChessBoard {
 
     public boolean isPieceColorNotMatch(final Position position, final Color color) {
         final Piece piece = pieces.get(position);
-        return piece.isColorMatch(color);
+        return !piece.isColorMatch(color);
     }
 
     public List<Piece> getPieces(final Color color) {

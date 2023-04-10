@@ -27,6 +27,9 @@ public class LoadCommand extends AbstractCommand {
         validateGameEmpty(chessGame);
 
         final ChessGame loadedGame = repeatUntilNoIAE(() -> loadGame(inputView, chessGameService));
+        if (chessGameService.isGameOver(loadedGame)) {
+            outputView.printEndedGameMessage();
+        }
         outputView.printChessBoard(chessGameService.getChessBoard(loadedGame));
         return loadedGame;
     }

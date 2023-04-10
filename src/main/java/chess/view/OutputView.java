@@ -102,6 +102,11 @@ public class OutputView {
         println("게임을 종료합니다!");
     }
 
+    public void printEndedGameMessage() {
+        println("");
+        println("이미 종료된 게임입니다.");
+    }
+
     private void print(final String message) {
         System.out.print(message);
     }
